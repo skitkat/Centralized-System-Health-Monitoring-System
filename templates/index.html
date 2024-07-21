@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Metrics Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        
+        /* Header Styles */
+        .dashboard-header {
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            display: inline-block;
+        }
+        .dashboard-header img {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 20px;
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            z-index: 2;
+        }
+        .dropdown select {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #001f3f; /* Navy Blue */
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            max-height: 200px; /* Limit height for dropdown box */
+            overflow-y: auto; /* Scrollbar for long lists */
+        }
+        .dropdown button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .dropdown button:hover {
+            background-color: #003366; /* Darker Navy Blue on hover */
+        }
+
+        /* Table Container */
+        .table-container {
+            padding: 20px;
+            margin: 20px auto;
+            width: 98%; /* Increased width */
+            max-width: 1600px; /* Increased max-width */
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        /* Color Classes */
+        .green {
+            background-color: #d4edda; /* Light green */
+        }
+        .yellow {
+            background-color: #fff3cd; /* Light yellow */
+        }
+        .red {
+            background-color: #f8d7da; /* Light red */
+        }
+
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            font-size: 1.5em;
+            color: #001f3f; /* Navy Blue */
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #001f3f; /* Navy Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer Styles */
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+        /* Add this to your existing styles in index.html */
+ .default-color {
+    background-color: #f4f4f9; /* Change to any color you want */
+}
+
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <img src="\home\kali\tasks\IAF\rhel_server_monitoring system\d2\templates\IAF.png" alt="Logo">
+        <h1><i class="fas fa-tachometer-alt"></i> System Metrics Dashboard</h1>
+    </div>
+    <div class="dropdown">
+        <select id="city-select">
+            <option value="All">All</option>
+            {% for city in cities %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+        </select>
+        <button id="go-button">Go</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Location</th>
+                    <th>IP</th>
+                    <th>Total Disk</th>
+                    <th>Disk Usage</th>
+                    <th>Total Memory</th>
+                    <th>Memory Usage</th>
+                    <th>CPU Usage</th>
+                    <th>Number of CPUs</th>
+                    <th>Firewall Rules</th>
+                </tr>
+            </thead>
+            <tbody id="data-table-body">
+                <!-- Data rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+        <div class="loading" id="loading-div">
+            <div class="spinner"></div>
+            Loading data...
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 System Metrics Dashboard. All rights reserved.</p>
+    </div>
+
+    <script>
+   document.addEventListener("DOMContentLoaded", function() {
+    const goButton = document.getElementById('go-button');
+    const citySelect = document.getElementById('city-select');
+    const dataTableBody = document.getElementById('data-table-body');
+    const loadingDiv = document.getElementById('loading-div');
+
+    goButton.addEventListener('click', function() {
+        const selectedCity = citySelect.value;
+        loadingDiv.style.display = 'block';
+        fetch(`/get_data?city=${selectedCity}`)
+            .then(response => response.json())
+            .then(data => {
+                dataTableBody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const diskUsage = parseInt(row['Disk Usage'].replace('%', ''));
+                    const memoryUsage = parseInt(row['Memory Usage'].replace('%', ''));
+                    const cpuUsage = parseInt(row['CPU Usage'].replace('%', ''));
+
+                    // Apply default-color when "All" is selected
+                    let rowClass = '';
+                    if (selectedCity === "All") {
+                        rowClass = 'default-color';
+                    } else {
+                        // Determine the color based on the highest value among Disk Usage, Memory Usage, and CPU Usage
+                        const highestUsage = Math.max(diskUsage, memoryUsage, cpuUsage);
+
+                        if (highestUsage > 90) {
+                            rowClass = 'red';
+                        } else if (highestUsage > 75) {
+                            rowClass = 'yellow';
+                        } else {
+                            rowClass = 'green';
+                        }
+                    }
+
+                    tr.className = rowClass;
+                    tr.innerHTML = `
+                        <td>${row.Timestamp}</td>
+                        <td>${row.Location}</td>
+                        <td>${row.IP}</td>
+                        <td>${row['Total Disk']}</td>
+                        <td>${row['Disk Usage']}</td>
+                        <td>${row['Total Memory']}</td>
+                        <td>${row['Memory Usage']}</td>
+                        <td>${row['CPU Usage']}</td>
+                        <td>${row['Number of CPUs']}</td>
+                        <td>${row['Firewall Rules']}</td>
+                    `;
+                    dataTableBody.appendChild(tr);
+                });
+                loadingDiv.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                loadingDiv.style.display = 'none';
+            });
+    });
+});
+
+
+    </script>
+</body>
+</html>
