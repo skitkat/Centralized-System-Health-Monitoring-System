@@ -63,3 +63,6 @@ The project has been tested on the following setup:
 - **Central Server (`app.py`):** Hosts a Flask web server that reads metrics from a CSV file and displays them on a dashboard. The dashboard allows filtering by city and dynamically updates the display based on the selected city.
 - **Dashboard (`index.html`):** Utilizes HTML, CSS, and JavaScript to create a user-friendly interface. Displays system metrics in a table format with color-coded rows based on usage thresholds. Includes a pie chart for visual representation of disk, memory, and CPU usage.
 
+
+![Dashboard Screenshot](images/p1.JPG)
+![Dashboard Screenshot](images/p2.JPG)
