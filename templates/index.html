@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Metrics Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        
+        /* Header Styles */
+        .dashboard-header {
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            display: inline-block;
+        }
+        .dashboard-header img {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 20px;
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            z-index: 2;
+        }
+        .dropdown select {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #001f3f; /* Navy Blue */
+            border-radius: 2px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            max-height: 400px; /* Limit height for dropdown box */
+            overflow-y: auto; /* Scrollbar for long lists */
+        }
+        .dropdown button {
+            margin: 10px 20px;
+            padding: 10px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 20px;
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .dropdown button:hover {
+            background-color: #003366; /* Darker Navy Blue on hover */
+        }
+
+        /* Table Container */
+        .table-container {
+            padding: 20px;
+            margin: 20px auto;
+            width: 95%;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-radius: 50px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        /* Color Classes */
+        .green {
+            background-color: #d4edda; /* Light green */
+        }
+        .yellow {
+            background-color: #fff3cd; /* Light yellow */
+        }
+        .orange {
+            background-color: #ffe8a1; /* Light orange */
+        }
+        .red {
+            background-color: #f8d7da; /* Light red */
+        }
+        .default-color {
+            background-color: #fff; /* Default white for "All" */
+        }
+
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            font-size: 1.5em;
+            color: #001f3f; /* Navy Blue */
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #001f3f; /* Navy Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer Styles */
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #001f3f; /* Navy Blue */
+            color: #fff;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        .chart-container {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <img src="iAF.png" alt="Logo">
+        <h1><i class="fas fa-tachometer-alt"></i> System Metrics Dashboard</h1>
+    </div>
+    <br>
+    <div class="dropdown">
+        <select id="city-select">
+            <option value="All">All</option>
+            {% for city in cities %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+        </select>
+        <button id="go-button">Go</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Location</th>
+                    <th>IP</th>
+                    <th>Total Disk</th>
+                    <th>Disk Usage</th>
+                    <th>Total Memory</th>
+                    <th>Memory Usage</th>
+                    <th>CPU Usage</th>
+                    <th>Number of CPUs</th>
+                    <th>Firewall Rules</th>
+                    <th>Usage Chart</th>
+                </tr>
+            </thead>
+            <tbody id="data-table-body">
+                <!-- Data rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+        <div class="loading" id="loading-div">
+            <div class="spinner"></div>
+            Loading data...
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 System Metrics Dashboard. All rights reserved.</p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const goButton = document.getElementById('go-button');
+            const citySelect = document.getElementById('city-select');
+            const dataTableBody = document.getElementById('data-table-body');
+            const loadingDiv = document.getElementById('loading-div');
+            let alertedCities = new Set();
+
+            goButton.addEventListener('click', function() {
+                const selectedCity = citySelect.value;
+                loadingDiv.style.display = 'block';
+                dataTableBody.innerHTML = '';
+
+                fetch(`/get_data?city=${selectedCity}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingDiv.style.display = 'none';
+                        data.forEach(row => {
+                            const tr = document.createElement('tr');
+
+                            if (selectedCity === 'All') {
+                                tr.classList.add('default-color');
+                            } else {
+                                tr.classList.add(row.color);
+                            }
+
+                            tr.innerHTML = `
+                                <td>${row.Timestamp}</td>
+                                <td>${row.Location}</td>
+                                <td>${row.IP}</td>
+                                <td>${row['Total Disk']}</td>
+                                <td>${row['Disk Usage']}</td>
+                                <td>${row['Total Memory']}</td>
+                                <td>${row['Memory Usage']}</td>
+                                <td>${row['CPU Usage']}</td>
+                                <td>${row['Number of CPUs']}</td>
+                                <td>${row['Firewall Rules']}</td>
+                                <td><div class="chart-container"><canvas id="chart-${row.IP}"></canvas></div></td>
+                            `;
+
+                            dataTableBody.appendChild(tr);
+
+                            createChart(row.IP, row['Disk Usage'], row['Memory Usage'], row['CPU Usage']);
+                        });
+
+                        if (selectedCity !== 'All') {
+                            data.forEach(row => {
+                                checkUsageAlert(row);
+                            });
+                        }
+                    });
+            });
+
+            function createChart(ip, diskUsage, memoryUsage, cpuUsage) {
+    const ctx = document.getElementById(`chart-${ip}`).getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            datasets: [{
+                data: [
+                    parseFloat(diskUsage.replace('%', '')),
+                    parseFloat(memoryUsage.replace('%', '')),
+                    parseFloat(cpuUsage.replace('%', ''))
+                ],
+                backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Hide legend labels
+                },
+                tooltip: {
+                    callbacks: {
+                        label: () => '' // Hide tooltip labels
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+            function checkUsageAlert(row) {
+                const memoryUsage = parseFloat(row['Memory Usage'].replace('%', ''));
+                const cpuUsage = parseFloat(row['CPU Usage'].replace('%', ''));
+                const diskUsage = parseFloat(row['Disk Usage'].replace('%', ''));
+
+                if (memoryUsage > 90 || cpuUsage > 90 || diskUsage > 90) {
+                    const cityAlert = `${row.Location} - IP ${row.IP}`;
+                    if (!alertedCities.has(cityAlert)) {
+                        alertedCities.add(cityAlert);
+                        const alertDiv = document.createElement('div');
+                        alertDiv.classList.add('alert');
+                        alertDiv.innerText = `Alert: High usage detected for ${row.Location} with ${row['Disk Usage']} disk, ${row['Memory Usage']} memory, and ${row['CPU Usage']} CPU usage.`;
+                        document.body.appendChild(alertDiv);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
