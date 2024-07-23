@@ -1,77 +1,65 @@
+# Centralized System Health Monitoring System
 
+## Overview
+The Centralized System Health Monitoring System is designed to monitor the health metrics of multiple remote systems within a network. The project consists of two main components:
 
-# RHEL Server Network Monitoring System
+1. **Agent** (`p2.py`): This script runs on each remote system to gather metrics such as disk usage, memory usage, CPU usage, and firewall rules. It then sends this data to a central server.
+2. **Dashboard** (`app.py` and `index.html`): The central server receives the data, stores it in a CSV file, and displays it on a web dashboard. The dashboard provides a visual representation of the system metrics for all connected remote systems.
 
-## Project Description
+## Setup
 
-The RHEL Server Network Monitoring System is designed to monitor and log system metrics from multiple remote servers in a central location. This system includes:
+### Central Server Setup
+1. Clone the repository to your central server.
+2. Install the required Python packages:
+    ```sh
+    pip install paramiko requests pandas flask
+    ```
+3. Place the `certificate.pem` and `key.pem` files in the same directory as `app.py`. These files are used to enable HTTPS for the Flask web server.
+4. Run the Flask application:
+    ```sh
+    python app.py
+    ```
 
-- A central server that receives and stores metrics from remote servers in a CSV file.
-- A web-based dashboard built with Python Flask to visualize the collected data.
+### Remote Agent Setup
+1. Ensure Python is installed on all remote systems.
+2. Transfer `p2.py` to each remote system.
+3. Run the `p2.py` script on each remote system:
+    ```sh
+    python p2.py
+    ```
+4. The script will prompt for the central server IP, username, and password. Once provided, it will gather system metrics and send them to the central server.
 
-The application is useful for monitoring key system performance indicators such as disk usage, memory usage, and CPU usage across multiple servers, providing a centralized view of your network's health.
+## Dependencies/Prerequisites
+- **Python 3.6+**
+- **Python Libraries:**
+  - `paramiko`
+  - `requests`
+  - `pandas`
+  - `flask`
+- **Certificates:**
+  - `certificate.pem` and `key.pem` for HTTPS support
 
-## Prerequisites
+## .pem Files
+The `.pem` files (`certificate.pem` and `key.pem`) are used to enable HTTPS for secure communication between the user’s browser and the Flask web server. Ensure these files are present in the project directory.
 
-Before running the application, ensure you have the following:
+## Usage
+1. Start the Flask server on the central system:
+    ```sh
+    python app.py
+    ```
+2. Run the agent script on each remote system:
+    ```sh
+    python p2.py
+    ```
+3. Access the dashboard by navigating to `https://<central_server_ip>:5000` in a web browser.
 
-1. **Python 3.7 or higher**: Required to run the Flask application and the metrics collection script.
-2. **Flask**: Web framework used to build the dashboard.
-3. **Pandas**: Library for data manipulation and analysis.
-4. **Paramiko**: Library for SSH connections to remote servers.
-5. **Requests**: Library for making HTTP requests.
-6. **CSV File**: A CSV file (`all_server_health.csv`) on the central server to store metrics.
-7. **SSH Access**: SSH access to the central server for uploading metrics.
-8. **Permissions**: Ensure you have the necessary permissions to execute system commands and access the network.
+## Platform
+The project has been tested on the following setup:
+- **Central Server:** Kali Linux VM
+- **Remote Systems:** Two Kali Linux VMs
 
-## Installation
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone <repository-url>
-   cd <repository-directory>
-   ```
-
-2. **Install Python Packages**
-
-   Create a virtual environment (optional but recommended) and install the required packages:
-
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install flask pandas paramiko requests
-   ```
-
-## Running the Application
-
-1. **Start the Flask Web Application**
-
-   Navigate to the directory containing `app.py` and run the following command:
-
-   ```bash
-   python app.py
-   ```
-
-   The Flask application will start and be accessible at `http://localhost:5000`.
-
-2. **Run the Metrics Collection Script**
-
-   On each remote server, run the `p.py` script to collect system metrics and send them to the central server:
-
-   ```bash
-   python p.py
-   ```
-
-   This script will gather system metrics, including disk usage, memory usage, CPU usage, and firewall rules, and upload them to the central server.
-
-## Project Functionality
-
-1. **Metrics Collection**: The `p.py` script collects system metrics from remote servers, including disk usage, memory usage, CPU usage, and firewall rules. It then sends this data to a central server.
-
-2. **Data Storage**: Metrics are stored in a CSV file (`all_server_health.csv`) on the central server. This file is updated with new metrics or existing metrics are modified based on the IP address of the remote server.
-
-3. **Web Dashboard**: The Flask web application (`app.py`) serves a dashboard that reads data from the CSV file and displays it in a table format. Users can select specific cities (or "All") to view metrics.
-
-4. **Dynamic Row Coloring**: In the web dashboard, rows are colored based on the severity of system metrics. When "All" is selected, all rows are displayed with a default color, ignoring individual metric thresholds.
+## Technical Explanation
+- **Agent Script (`p2.py`):** Collects system metrics using shell commands and Python libraries. Uses `paramiko` to securely transfer data to the central server. Prompts for server IP and credentials through a GUI using `tkinter`.
+- **Central Server (`app.py`):** Hosts a Flask web server that reads metrics from a CSV file and displays them on a dashboard. The dashboard allows filtering by city and dynamically updates the display based on the selected city.
+- **Dashboard (`index.html`):** Utilizes HTML, CSS, and JavaScript to create a user-friendly interface. Displays system metrics in a table format with color-coded rows based on usage thresholds. Includes a pie chart for visual representation of disk, memory, and CPU usage.
 
